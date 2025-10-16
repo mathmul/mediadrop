@@ -61,4 +61,6 @@ herd php artisan tinker
 > DB::connection()->getPdo();
 herd php artisan migrate
 herd composer require --dev barryvdh/laravel-ide-helper
+herd php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+herd php artisan migrate
 ```
