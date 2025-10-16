@@ -66,4 +66,8 @@ herd php artisan migrate
 herd php artisan route:clear
 herd php artisan optimize:clear
 herd php artisan storage:link
+herd php artisan vendor:publish --provider="Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider" --tag=config
+herd php artisan ide-helper:generate
+herd php artisan ide-helper:meta
+herd php artisan ide-helper:models --write --reset
 ```
