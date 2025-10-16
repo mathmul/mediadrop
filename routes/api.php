@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\MediaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -7,5 +8,5 @@ Route::get('/health', function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/media', fn() => response()->json(['message' => 'ok']));
+    Route::post('/media', [MediaController::class, 'store']);
 });

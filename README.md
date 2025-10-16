@@ -63,4 +63,7 @@ herd php artisan migrate
 herd composer require --dev barryvdh/laravel-ide-helper
 herd php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
 herd php artisan migrate
+herd php artisan route:clear
+herd php artisan optimize:clear
+herd php artisan storage:link
 ```
