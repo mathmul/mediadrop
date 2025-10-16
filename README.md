@@ -19,7 +19,7 @@ Laravel 12 / PHP 8.4 project — assignment to build an authenticated API for me
     <summary>Write Tests First (TDD)</summary>
     <p>Create feature tests for the media upload endpoint covering authentication, validation, and database storage. One test, one implementation, then next test, next implementation, etc.</p>
     </details>
-- [ ] Task 4:
+- [X] Task 4:
     <details>
     <summary>Implement Models & Migrations</summary>
     <p>Define the <code>Media</code> model with UUIDv7 IDs, create a migration including title, description, file path, media (MIME) type, and size columns.</p>
