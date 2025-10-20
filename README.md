@@ -98,17 +98,19 @@ Alternatively, we can run Pest directly:
 ./vendor/bin/pest
 ```
 
-### VSCode extensions installed
-
-- PHP Intelephense
-- Laravel Extra Intellisense
-- Laravel goto view
-
 ### Misc
 
 <details>
-<summary>Commands history: Commands ran to set up the project</summary>
-<pre>
+<summary>VSCode extensions installed</summary>
+<ul>
+<li>PHP Intelephense</li>
+<li>Laravel Extra Intellisense</li>
+<li>Laravel goto view</li>
+</ul>
+</details>
+<details>
+<summary>Commands history</summary>
+<div>Commands ran to set up the project:<pre>
 npm i
 herd composer require spatie/laravel-ray
 herd composer require laravel/sanctum
@@ -125,7 +127,7 @@ herd php artisan vendor:publish --provider="Barryvdh\LaravelIdeHelper\IdeHelperS
 herd php artisan ide-helper:generate
 herd php artisan ide-helper:meta
 herd php artisan ide-helper:models --write --reset
-</pre>
+</div></pre>
 </details>
 
 ### *NOTE*
