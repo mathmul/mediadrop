@@ -2,6 +2,7 @@
 
 Laravel 12 / PHP 8.4 project — assignment to build an authenticated API for media uploads.
 
+
 ## TODO
 
 - [X] Task 1:
@@ -39,26 +40,117 @@ Laravel 12 / PHP 8.4 project — assignment to build an authenticated API for me
     <summary>Documentation</summary>
     <p>Document setup steps, API endpoint details, and testing instructions in this README.</p>
     </details>
-- [ ] Task 8:
+- [X] Task 8:
     <details>
     <summary>Polish & Optional Additions</summary>
-    <p>Run tests, clean up code, add Ray debugging, and consider extending with Livewire for a simple upload UI.</p>
+    <p>Run tests, clean up code.</p>
     </details>
+- [X] Task 9:
+    <details>
+    <summary>Dockerize</summary>
+    <p>Containerize the application (Nginx + PHP-FPM + Postgres) with Compose profiles for both “DB-only” (Herd) and full stack.</p>
+    </details>
+- [ ] Task 10:
+    <details>
+    <summary>Git Flow</summary>
+    <p>If there are multiple maintainers, enforce a branching strategy. Protect <code>main</code> (no direct pushes), use feature branches and pull requests with reviews, and require passing CI before merges.</p>
+    </details>
+
+
+
+
+## Getting started
+
+We support two local setups - pick one (don't run both on the same ports):
+
+- Herd (MacOS, Windows) - uses Docker only for Postgres
+- Docker (Linux, MacOS, Windows) - Nginx + PHP-FPM + Postgres in containers
+
+### Herd
+
+Prerequisites:
+- [Laravel Herd](https://herd.laravel.com/docs/macos/getting-started/installation)
+- Parent folder of project root is added to *Herd Paths* (in Herd settings)
+
+Quick start:
+
+```bash
+# 1) Clone
+git clone git@github.com:mathmul/mediadrop.git && cd mediadrop
+
+# 2) Copy .env
+cp .env.example .env
+
+# 3) Uncomment Herd-specific config in .env
+#    APP_URL=https://mediadrop.test
+#    DB_HOST=127.0.0.1
+#    SESSION_DRIVER=database
+
+# 4) App key & storage link
+herd php artisan key:generate
+herd php artisan storage:link
+
+# 5) Start Postgres only
+docker compose --profile dbonly up -d
+# To stop Postgres only: docker compose --profile dbonly down
+
+# 6) Migrate
+herd php artisan migrate
+
+# 7) (Optional) Health + tests
+curl https://mediadrop.test/api/health && echo
+herd php artisan test
+
+# 8) Serve via Herd
+herd init
+```
+
+### Docker
+
+Prerequisites
+
+- Docker Desktop 4.x
+- Ports 8080 (web) and 5432 (Postgres) free
+
+Quick start:
+
+```bash
+# 1) Clone
+git clone git@github.com:mathmul/mediadrop.git && cd mediadrop
+
+# 2) Copy .env
+cp .env.example .env
+
+# 3) Uncomment Docker-specific config in .env
+#    APP_URL=http://localhost:8080
+#    DB_HOST=postgres
+#    SESSION_DRIVER=file
+
+# 4) Start full stack (Compose profile: full)
+docker compose --profile full up -d
+# To stop the full stack: docker compose --profile full down
+
+# 5) Run migrations
+docker compose exec app php artisan migrate
+
+# 6) (Optional) Health + tests
+curl http://localhost:8080/api/health && echo
+docker compose exec app php artisan test
+```
+
+> **NOTE:** When using Docker, any commands you’d normally run with `herd` should be run with `docker compose exec app` instead (e.g., `docker compose exec app php artisan <command>`).
+
 
 ## Development
 
-The easiest way is to use [Laravel Herd](https://herd.laravel.com/docs/macos/getting-started/installation):
-- ensure the parent folder of project root is added to *Herd Paths*
-- run `herd init` twice, once to set everything up, second time to serve the application
-
 ### TDD
 
-We follow a Test-Driven Development (TDD) approach, where every feature is first defined by a test case, and then implemented to make the test pass. Here are the steps:
+We follow a Test-Driven Development (TDD) approach:
 
-1. Create a feature test
-2. Run the test and see it fail
-3. Implement the feature
-4. Run the test and see it pass
+1. Write a feature test
+2. Run the test and verify it fails (red)
+3. Implement the minimal code to pass
+4. Run the test and verify it passes (green)
 5. Refactor if needed
 6. Repeat
 
@@ -90,12 +182,28 @@ Run tests with
 
 ```bash
 herd php artisan test
+# or
+docker compose exec app php artisan test
 ```
 
 Alternatively, we can run Pest directly:
 
 ```bash
 ./vendor/bin/pest
+```
+
+### Code style (Pint)
+
+We use Laravel Pint for code formatting and linting.
+Pint follows PSR-12 and Laravel conventions out of the box.
+
+You can lint manually or run it via Composer:
+
+```bash
+# Herd
+herd composer lint
+# Docker
+docker compose exec app composer lint
 ```
 
 ### Misc
@@ -130,17 +238,29 @@ herd php artisan ide-helper:models --write --reset
 </div></pre>
 </details>
 
-### *NOTE*
+### *NOTES*
 
-`POST /api/media` endpoint allows files up to 200 MB to be uploaded to the server. Configure *Max File Upload Size* and *Memory Limit* in Herd PHP settings accordingly (or set `upload_max_filesize` and `memory_limit` to `200M` in *php.ini*).
+- `POST /api/media` accepts files up to **200 MB**.
+- For large uploads:
+    - **PHP**: set `upload_max_filesize`, `post_max_size` >= 200M; `memory_limit` >= 256M.
+    - **Herd**: Configure *Max File Upload Size* >= 200 and *Memory Limit* >= 256 in Herd PHP settings.
+    - **Nginx**: `client_max_body_size 256M` is set in *docker/nginx/default.conf*.
+- The API stores and serves files; no image processing is performed. *GD is present in the dev container* for tests using `UploadedFile::fake()->image()`, but the API itself doesn’t require GD to serve or store files.
+
 
 ## Testing
 
-### Terminal
-
-In this project we use Pest instead of PHPUnit.
+Example test run:
 
 ```bash
+herd php artisan test
+# or
+docker compose exec app php artisan test
+```
+
+<details>
+<summary>Example test run</summary>
+<pre>
 herd php artisan test
 
    PASS  Tests\Unit\SanityCheckTest
@@ -177,60 +297,63 @@ herd php artisan test
 
   Tests:    26 passed (58 assertions)
   Duration: 0.47s
-```
+</pre>
+</details>
 
 ### Postman
 
-To test the API, you can use Postman or any other API client. Because we have Sanctum authentication, you need to add a Bearer token to the Authorization header. You can get the token via command line:
+Sanctum requires a Bearer token.
 
 ```bash
+# Herd:
 herd php artisan tinker
-> $user = \App\Models\User::first() ?? \App\Models\User::factory()->create(['email' => 'tester@example.com']);
-> $token = $user->createToken('postman')->plainTextToken;
+# Docker:
+docker compose exec app php artisan tinker
+
+# In Tinker:
+$user = \App\Models\User::first() ?? \App\Models\User::factory()->create(['email' => 'tester@example.com']);
+$token = $user->createToken('postman')->plainTextToken;
+$token
+# example: 1|mVsbWKUDHax0SSk52sE8byAYdfOrLkcZNd8m5Mk4d42ce190
 ```
 
-The token will look something like this: `1|mVsbWKUDHax0SSk52sE8byAYdfOrLkcZNd8m5Mk4d42ce190`. Copy it and use it in `Postman > Authorization tab > Auth type: Bearer token > Token: <paste the token here>`.
+Copy it and use it in:
 
-#### # Request
+- Postman: `Authorization tab > Auth type: Bearer token > Token: <paste the token here>`.
+- cURL: `curl -H "Authorization: Bearer <token>" https://mediadrop.test/api/media`
 
-**POST https://mediadrop.test/api/media**
+#### Example request
 
-**Request Headers:**
+Herd (HTTPS):
 
-- Authorization: Bearer 1|s3oZOex6F25tBSkLGkfQMAXNho89BxoTGXauXh9s70c83fa0
-- User-Agent: PostmanRuntime/7.48.0
-- Accept: */*
-- Cache-Control: no-cache
-- Host: mediadrop.test
-- Accept-Encoding: gzip, deflate, br
-- Connection: keep-alive
-- Content-Type: multipart/form-data; boundary=--------------------------868968937604932384420559
-- Content-Length: 61850511
+```bash
+POST https://mediadrop.test/api/media
+```
 
-**Request Body:**
+Docker (HTTP):
 
-- title: "Test video"
-- description: "This is a test video"
-- file: undefined (the file was a 61.9 MB video, but Postman doesn't show it in the console)
+```bash
+POST http://localhost:8080/api/media
+```
 
-#### # Response
+**Body (multipart/form-data):**
 
-**Status Code:** 201
+- `title`: "Test upload"
+- `description`: "Optional"
+- `file`: (choose a file)
 
-**Response Time:** 552 ms
+**cURL (Docker example)**
 
-**Response Headers:**
+```bash
+TOKEN="<paste token here>"
+curl -X POST http://localhost:8080/api/media \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "title=My upload" \
+  -F "description=Optional" \
+  -F "file=@/path/to/local/file.jpg"
+```
 
-- Server: nginx/1.25.4
-- Content-Type: application/json
-- Transfer-Encoding: chunked
-- Connection: keep-alive
-- X-Powered-By: PHP/8.4.13
-- Cache-Control: no-cache, private
-- Date: Fri, 17 Oct 2025 16:30:48 GMT
-- Vary: Origin
-
-**Response Body:**
+**Example response body (201 Created):**
 
 ```json
 {
@@ -242,4 +365,21 @@ The token will look something like this: `1|mVsbWKUDHax0SSk52sE8byAYdfOrLkcZNd8m
     "public_url": "https:\/\/mediadrop.test\/storage\/media\/0VhKCm5nxsPEEhfqvxn9lhfzGMuHO0tCEjTQOydj.mp4",
     "created_at": "2025-10-17T16:30:48.000000Z"
 }
+```
+
+## Docker Compose profiles
+
+We use profiles to support both workflows:
+
+- `dbonly` - runs only Postgres (use with Herd).
+- `full` - runs Nginx + PHP-FPM + Postgres (+ queue/scheduler).
+
+```bash
+# Herd + DB-only
+docker compose --profile dbonly up -d
+docker compose --profile dbonly down
+
+# Full Docker stack
+docker compose --profile full up -d
+docker compose --profile full down
 ```

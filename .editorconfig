@@ -8,11 +8,11 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.md]
+[*.{blade.php,env,md}]
 trim_trailing_whitespace = false
 
-[*.{yml,yaml}]
+[*.{json,md,yaml,yml}]
 indent_size = 2
 
-[compose.yaml]
+[composer.json]
 indent_size = 4

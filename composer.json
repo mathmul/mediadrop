@@ -55,6 +55,9 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "lint": [
+            "./vendor/bin/pint"
+        ],
         "ide-helper": [
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:meta",
