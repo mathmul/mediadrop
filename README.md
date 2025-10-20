@@ -64,16 +64,38 @@ We follow a Test-Driven Development (TDD) approach, where every feature is first
 
 #### Pest
 
-We use Pest instead of PHPUnit. Created new tests with
+We use Pest instead of PHPUnit.
+
+Since we have [pest-plugin-laravel](https://pestphp.com/docs/plugins#content-laravel) installed, we can create new tests with
 
 ```bash
-herd php artisan pest:make <test_name>
+herd php artisan pest:test <TestName>         # Feature test (default)
+herd php artisan pest:test <TestName> --unit  # Unit test
+herd php artisan pest:dataset <DatasetName>   # Creates tests/Datasets/<DatasetName>.php
+```
+
+We can also avoid using `$this->` by using Pest's built-in functions from the `Pest\Laravel` namespace, eg.
+
+```php
+use function Pest\Laravel\assertDatabaseHas;
+
+# This example fails, but it shows how to use Pest's built-in functions
+it('stores a media record in the database', function () {
+    post('/api/media', ['title' => 'Test upload']);
+    assertDatabaseHas('media', ['title' => 'Test upload']);
+});
 ```
 
 Run tests with
 
 ```bash
 herd php artisan test
+```
+
+Alternatively, we can run Pest directly:
+
+```bash
+./vendor/bin/pest
 ```
 
 ### VSCode extensions installed
@@ -117,39 +139,39 @@ In this project we use Pest instead of PHPUnit.
 herd php artisan test
 
    PASS  Tests\Unit\SanityCheckTest
-  ✓ that true is true                                                                                                                    0.01s
+  ✓ that true is true                                                                                                                 0.01s
 
    PASS  Tests\Feature\ApiHealthTest
-  ✓ GET /api/health → it returns 200 OK                                                                                                  0.11s
+  ✓ GET /api/health → it returns 200 OK                                                                                               0.12s
 
    PASS  Tests\Feature\ApiMediaTest
-  ✓ POST /api/media → it rejects unauthenticated requests                                                                                0.02s
-  ✓ POST /api/media → authorized → it returns 201 Created with expected response shape                                                   0.03s
-  ✓ POST /api/media → authorized → it stores the file on public disk                                                                     0.01s
-  ✓ POST /api/media → authorized → it stores a media record in the database                                                              0.01s
-  ✓ POST /api/media → authorized → validation → it rejects JSON uploads with validation error                                            0.01s
-  ✓ POST /api/media → authorized → validation → it requires a title                                                                      0.01s
+  ✓ POST /api/media → it rejects unauthenticated requests                                                                             0.02s
+  ✓ POST /api/media → authorized → it returns 201 Created with expected response shape                                                0.03s
+  ✓ POST /api/media → authorized → it stores the file on public disk                                                                  0.01s
+  ✓ POST /api/media → authorized → it stores a media record in the database                                                           0.01s
+  ✓ POST /api/media → authorized → validation → it rejects JSON uploads with validation error                                         0.01s
+  ✓ POST /api/media → authorized → validation → it requires a title                                                                   0.01s
   ✓ POST /api/media → authorized → validation → it requires a file
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.jpg', 64, 'image/jpeg')                       0.01s
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.png', 64, 'image/png')
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.gif', 64, 'image/gif')                        0.01s
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webp', 64, 'image/webp')                      0.01s
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mp4', 1024, 'video/mp4')
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mov', 1024, 'video/quicktime')
-  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webm', 1024, 'video/webm')                    0.01s
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('readme.txt', 4, 'text/plain')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('vector.svg', 10, 'image/svg+xml')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heic', 512, 'image/heic')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heif', 512, 'image/heif')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('track.mp3', 1024, 'audio/mpeg')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('movie.mkv', 2048, 'video/x-matroska')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('archive.zip', 64, 'application/zip')
-  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('script.js', 5, 'application/javascript')
-  ✓ POST /api/media → authorized → validation → it accepts a 200 MB upload
-  ✓ POST /api/media → authorized → validation → it rejects a 201 MB upload with validation error
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.jpg', 64, 'image/jpeg')
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.png', 64, 'image/png')                     0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.gif', 64, 'image/gif')                     0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webp', 64, 'image/webp')                   0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mp4', 1024, 'video/mp4')                   0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mov', 1024, 'video/quicktime')             0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webm', 1024, 'video/webm')                 0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('readme.txt', 4, 'text/plain')               0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('vector.svg', 10, 'image/svg+xml')           0.04s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heic', 512, 'image/heic')             0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heif', 512, 'image/heif')             0.03s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('track.mp3', 1024, 'audio/mpeg')             0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('movie.mkv', 2048, 'video/x-matroska')       0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('archive.zip', 64, 'application/zip')        0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('script.js', 5, 'application/javascript')    0.01s
+  ✓ POST /api/media → authorized → validation → it accepts a 200 MB upload                                                            0.01s
+  ✓ POST /api/media → authorized → validation → it rejects a 201 MB upload with validation error                                      0.01s
 
   Tests:    26 passed (58 assertions)
-  Duration: 0.34s
+  Duration: 0.47s
 ```
 
 ### Postman
