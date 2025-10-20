@@ -13,13 +13,32 @@ mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache v
 chown -R www-data:www-data storage bootstrap/cache vendor
 chmod -R 775 storage bootstrap/cache vendor || true
 
-# --- Install Composer deps as www-data (so files are owned correctly) ---
+# Install Composer deps as www-data (owned correctly), with retry
 if [ ! -f vendor/autoload.php ]; then
-  su-exec www-data:www-data composer install --prefer-dist --no-interaction
+  echo "Installing Composer dependencies..."
+  su-exec www-data:www-data composer clear-cache || true
+
+  # 1st attempt (no progress, 1 parallel stream to be gentle)
+  if ! COMPOSER_MAX_PARALLEL_HTTP=1 su-exec www-data:www-data composer install --prefer-dist --no-interaction --no-progress; then
+    echo "Composer install failed; retrying after cache clear..."
+    su-exec www-data:www-data composer clear-cache || true
+    sleep 2
+    # 2nd attempt (still conservative)
+    COMPOSER_MAX_PARALLEL_HTTP=1 su-exec www-data:www-data composer install --prefer-dist --no-interaction --no-progress
+  fi
 fi
 
-# App key
-su-exec www-data:www-data php artisan key:generate --force || true
+# Ensure .env exists
+if [ ! -f .env ] && [ -f .env.example ]; then
+  cp .env.example .env
+fi
+
+# Generate key only if empty
+if ! grep -q '^APP_KEY=.\+' .env; then
+  su-exec www-data:www-data php artisan key:generate --force || true
+else
+  echo "APP_KEY already set; skipping key:generate"
+fi
 
 # Storage symlink
 su-exec www-data:www-data php artisan storage:link || true

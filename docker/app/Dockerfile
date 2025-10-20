@@ -8,7 +8,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/dl-3.alpinelinux.org/g' /etc/apk/repositori
     autoconf make g++ linux-headers pkgconfig \
     postgresql-dev postgresql-libs \
     freetype-dev libjpeg-turbo-dev libpng-dev \
-    shadow su-exec
+    shadow su-exec ca-certificates
 
 # PHP extensions
 RUN docker-php-ext-configure intl \

@@ -10,7 +10,7 @@ services:
     volumes:
       - ./:/var/www/html:cached
       - storage:/var/www/html/storage
-      - vendor:/var/www/html/vendor
+      # - vendor:/var/www/html/vendor
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./:/var/www/html:cached
       - storage:/var/www/html/storage
-      - vendor:/var/www/html/vendor
+      # - vendor:/var/www/html/vendor
     depends_on:
       - app
 
@@ -57,7 +57,7 @@ services:
     volumes:
       - ./:/var/www/html:cached
       - storage:/var/www/html/storage
-      - vendor:/var/www/html/vendor
+      # - vendor:/var/www/html/vendor
     depends_on:
       - app
 
