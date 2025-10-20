@@ -1,11 +1,14 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
-use function Pest\Laravel\{assertDatabaseHas, post, postJson, withHeader};
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\post;
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withHeader;
 
 describe('POST /api/media', function () {
 
@@ -43,9 +46,9 @@ describe('POST /api/media', function () {
                     'description',
                     'media_type',
                     'size',
-                    'public_url'
+                    'public_url',
                 ])
-                ->assertJsonPath('public_url', fn($url) => str_contains($url, '/storage/media/'));
+                ->assertJsonPath('public_url', fn ($url) => str_contains($url, '/storage/media/'));
         });
 
         it('stores the file on public disk', function () {
@@ -55,7 +58,7 @@ describe('POST /api/media', function () {
                 'description' => 'My first test image',
                 'file' => $file,
             ]);
-            Storage::disk('public')->assertExists('media/' . $file->hashName());
+            Storage::disk('public')->assertExists('media/'.$file->hashName());
         });
 
         it('stores a media record in the database', function () {
@@ -69,7 +72,7 @@ describe('POST /api/media', function () {
                 'title' => 'Test upload',
                 'description' => 'My first test image',
                 'disk' => 'public',
-                'path' => 'media/' . $file->hashName(),
+                'path' => 'media/'.$file->hashName(),
                 'media_type' => 'image/jpeg',
                 'size' => $file->getSize(),
             ]);

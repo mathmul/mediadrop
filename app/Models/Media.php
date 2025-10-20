@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $size
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media query()
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media whereSize($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Media whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Media extends Model
@@ -34,6 +36,7 @@ class Media extends Model
     use HasUuids;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
