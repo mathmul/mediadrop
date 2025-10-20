@@ -1,0 +1,6 @@
+name: mediadrop
+php: "8.4"
+secured: true
+aliases: {}
+integrations:
+  forge: {}
