@@ -104,9 +104,11 @@ Alternatively, we can run Pest directly:
 - Laravel Extra Intellisense
 - Laravel goto view
 
-### History: Commands ran to set up the project
+### Misc
 
-```bash
+<details>
+<summary>Commands history: Commands ran to set up the project</summary>
+<pre>
 npm i
 herd composer require spatie/laravel-ray
 herd composer require laravel/sanctum
@@ -123,7 +125,8 @@ herd php artisan vendor:publish --provider="Barryvdh\LaravelIdeHelper\IdeHelperS
 herd php artisan ide-helper:generate
 herd php artisan ide-helper:meta
 herd php artisan ide-helper:models --write --reset
-```
+</pre>
+</details>
 
 ### *NOTE*
 
