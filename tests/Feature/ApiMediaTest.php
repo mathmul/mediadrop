@@ -5,69 +5,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 
-beforeEach(function () {
-    $this->withHeader('Accept', 'application/json');
-    Storage::fake('public');
-    $user = User::factory()->create();
-    Sanctum::actingAs($user);
-});
-
-it('allows an authenticated user to upload a media file and stores its record', function () {
-    $file = UploadedFile::fake()->image('test.jpg');
-
-    $response = $this->postJson('/api/media', [
-        'title' => 'Test upload',
-        'description' => 'My first test image',
-        'file' => $file,
-    ]);
-
-    $response->assertCreated()
-        ->assertJsonStructure([
-            'id',
-            'title',
-            'description',
-            'media_type',
-            'size',
-            'public_url'
-        ]);
-
-    // Assert the file was stored
-    Storage::disk('public')->assertExists('media/' . $file->hashName());
-
-    // Assert the database has a record
-    $this->assertDatabaseHas('media', [
-        'title' => 'Test upload',
-        'media_type' => 'image/jpeg',
-    ]);
-});
-
-it('rejects JSON uploads with validation error', function () {
-    $this->postJson('/api/media', [
-        'title' => 'Bad JSON upload',
-        'description' => 'Request header "application/json" does not support file uploads',
-        'file' => 'path, base64, or some other string',
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['file']);
-});
-
-it('requires a title', function () {
-    $file = UploadedFile::fake()->image('x.jpg');
-    $this->post('/api/media', [
-        'title' => '',
-        'file' => $file,
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['title']);
-});
-
-it('requires a file', function () {
-    $this->post('/api/media', [
-        'title' => 'Missing file',
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['file']);
-});
 dataset('supported_media_types', [
     ['ok.jpg',   64,   'image/jpeg'],
     ['ok.png',   64,   'image/png'],
@@ -77,15 +14,6 @@ dataset('supported_media_types', [
     ['ok.mov',   1024, 'video/quicktime'],
     ['ok.webm',  1024, 'video/webm'],
 ]);
-it('accepts supported media types', function (string $name, int $kb, string $mediaType) {
-    $file = UploadedFile::fake()->create($name, $kb, $mediaType);
-    $this->post('/api/media', [
-        'title' => 'Bad type',
-        'file' => $file,
-    ])
-        ->assertCreated();
-})->with('supported_media_types');
-
 dataset('unsupported_media_types', [
     // [filename,    size_kb,  media_type]
     ['readme.txt',   4,        'text/plain'],
@@ -97,37 +25,148 @@ dataset('unsupported_media_types', [
     ['archive.zip',  64,       'application/zip'],
     ['script.js',    5,        'application/javascript'],
 ]);
-it('rejects unsupported media types', function (string $name, int $kb, string $mediaType) {
-    $file = UploadedFile::fake()->create($name, $kb, $mediaType);
-    $this->post('/api/media', [
-        'title' => 'Bad type',
-        'file' => $file,
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['file']);
-})->with('unsupported_media_types');
 
-/**
- * Laravel's file "max" rule is in KB.
- * 200 MB = 204800 KB
- */
-it('accepts a 200 MB upload', function () {
-    $file = UploadedFile::fake()->create('ok-200mb.mp4', 204_800, 'video/mp4');
-    $this->post('/api/media', [
-        'title' => 'Max size',
-        'description' => 'Exactly at 200 MB limit',
-        'file' => $file,
-    ])
-        ->assertCreated();
-});
+describe('POST /api/media', function () {
 
-it('rejects a 201 MB upload with validation error', function () {
-    $file = UploadedFile::fake()->create('too-big-201mb.mp4', 206_000, 'video/mp4');
-    $this->post('/api/media', [
-        'title' => 'Too big',
-        'description' => 'Bigger than 200 MB',
-        'file' => $file,
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['file']);
+    beforeEach(function () {
+        $this->withHeader('Accept', 'application/json');
+        Storage::fake('public');
+    });
+
+    it('rejects unauthenticated requests', function () {
+        $this->post('/api/media', [
+            'title' => 'No auth',
+            'description' => '',
+            'file' => UploadedFile::fake()->image('x.jpg'),
+        ])
+            ->assertUnauthorized();
+    });
+
+    describe('authorized', function () {
+
+        beforeEach(function () {
+            Sanctum::actingAs(User::factory()->create());
+        });
+
+        it('returns 201 Created with expected response shape', function () {
+            $file = UploadedFile::fake()->image('test.jpg');
+            $this->post('/api/media', [
+                'title' => 'Test upload',
+                'description' => 'My first test image',
+                'file' => $file,
+            ])
+                ->assertCreated()
+                ->assertJsonStructure([
+                    'id',
+                    'title',
+                    'description',
+                    'media_type',
+                    'size',
+                    'public_url'
+                ])
+                ->assertJsonPath('public_url', fn($url) => str_contains($url, '/storage/media/'));
+        });
+
+        it('stores the file on public disk', function () {
+            $file = UploadedFile::fake()->image('test.jpg');
+            $this->post('/api/media', [
+                'title' => 'Test upload',
+                'description' => 'My first test image',
+                'file' => $file,
+            ]);
+            Storage::disk('public')->assertExists('media/' . $file->hashName());
+        });
+
+        it('stores a media record in the database', function () {
+            $file = UploadedFile::fake()->image('test.jpg');
+            $this->post('/api/media', [
+                'title' => 'Test upload',
+                'description' => 'My first test image',
+                'file' => $file,
+            ]);
+            $this->assertDatabaseHas('media', [
+                'title' => 'Test upload',
+                'description' => 'My first test image',
+                'disk' => 'public',
+                'path' => 'media/' . $file->hashName(),
+                'media_type' => 'image/jpeg',
+                'size' => $file->getSize(),
+            ]);
+        });
+
+        describe('validation', function () {
+
+            it('rejects JSON uploads with validation error', function () {
+                $this->postJson('/api/media', [
+                    'title' => 'Bad JSON upload',
+                    'description' => 'Request header "application/json" does not support file uploads',
+                    'file' => 'path, base64, or some other string',
+                ])
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors(['file']);
+            });
+
+            it('requires a title', function () {
+                $file = UploadedFile::fake()->image('x.jpg');
+                $this->post('/api/media', [
+                    'title' => '',
+                    'file' => $file,
+                ])
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors(['title']);
+            });
+
+            it('requires a file', function () {
+                $this->post('/api/media', [
+                    'title' => 'Missing file',
+                ])
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors(['file']);
+            });
+
+            it('accepts supported media types', function (string $name, int $kb, string $mediaType) {
+                $file = UploadedFile::fake()->create($name, $kb, $mediaType);
+                $this->post('/api/media', [
+                    'title' => 'Bad type',
+                    'file' => $file,
+                ])
+                    ->assertCreated();
+            })->with('supported_media_types');
+
+            it('rejects unsupported media types', function (string $name, int $kb, string $mediaType) {
+                $file = UploadedFile::fake()->create($name, $kb, $mediaType);
+                $this->post('/api/media', [
+                    'title' => 'Bad type',
+                    'file' => $file,
+                ])
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors(['file']);
+            })->with('unsupported_media_types');
+
+            /**
+             * Laravel's file "max" rule is in KB.
+             * 200 MB = 204800 KB
+             */
+            it('accepts a 200 MB upload', function () {
+                $file = UploadedFile::fake()->create('ok-200mb.mp4', 204_800, 'video/mp4');
+                $this->post('/api/media', [
+                    'title' => 'Max size',
+                    'description' => 'Exactly at 200 MB limit',
+                    'file' => $file,
+                ])
+                    ->assertCreated();
+            });
+
+            it('rejects a 201 MB upload with validation error', function () {
+                $file = UploadedFile::fake()->create('too-big-201mb.mp4', 206_000, 'video/mp4');
+                $this->post('/api/media', [
+                    'title' => 'Too big',
+                    'description' => 'Bigger than 200 MB',
+                    'file' => $file,
+                ])
+                    ->assertUnprocessable()
+                    ->assertJsonValidationErrors(['file']);
+            });
+        });
+    });
 });

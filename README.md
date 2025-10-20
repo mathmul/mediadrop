@@ -106,3 +106,113 @@ herd php artisan ide-helper:models --write --reset
 ### *NOTE*
 
 `POST /api/media` endpoint allows files up to 200 MB to be uploaded to the server. Configure *Max File Upload Size* and *Memory Limit* in Herd PHP settings accordingly (or set `upload_max_filesize` and `memory_limit` to `200M` in *php.ini*).
+
+## Testing
+
+### Terminal
+
+In this project we use Pest instead of PHPUnit.
+
+```bash
+herd php artisan test
+
+   PASS  Tests\Unit\SanityCheckTest
+  ✓ that true is true                                                                                                                    0.01s
+
+   PASS  Tests\Feature\ApiHealthTest
+  ✓ GET /api/health → it returns 200 OK                                                                                                  0.11s
+
+   PASS  Tests\Feature\ApiMediaTest
+  ✓ POST /api/media → it rejects unauthenticated requests                                                                                0.02s
+  ✓ POST /api/media → authorized → it returns 201 Created with expected response shape                                                   0.03s
+  ✓ POST /api/media → authorized → it stores the file on public disk                                                                     0.01s
+  ✓ POST /api/media → authorized → it stores a media record in the database                                                              0.01s
+  ✓ POST /api/media → authorized → validation → it rejects JSON uploads with validation error                                            0.01s
+  ✓ POST /api/media → authorized → validation → it requires a title                                                                      0.01s
+  ✓ POST /api/media → authorized → validation → it requires a file
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.jpg', 64, 'image/jpeg')                       0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.png', 64, 'image/png')
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.gif', 64, 'image/gif')                        0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webp', 64, 'image/webp')                      0.01s
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mp4', 1024, 'video/mp4')
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.mov', 1024, 'video/quicktime')
+  ✓ POST /api/media → authorized → validation → it accepts supported media types with ('ok.webm', 1024, 'video/webm')                    0.01s
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('readme.txt', 4, 'text/plain')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('vector.svg', 10, 'image/svg+xml')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heic', 512, 'image/heic')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('photo.heif', 512, 'image/heif')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('track.mp3', 1024, 'audio/mpeg')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('movie.mkv', 2048, 'video/x-matroska')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('archive.zip', 64, 'application/zip')
+  ✓ POST /api/media → authorized → validation → it rejects unsupported media types with ('script.js', 5, 'application/javascript')
+  ✓ POST /api/media → authorized → validation → it accepts a 200 MB upload
+  ✓ POST /api/media → authorized → validation → it rejects a 201 MB upload with validation error
+
+  Tests:    26 passed (58 assertions)
+  Duration: 0.34s
+```
+
+### Postman
+
+To test the API, you can use Postman or any other API client. Because we have Sanctum authentication, you need to add a Bearer token to the Authorization header. You can get the token via command line:
+
+```bash
+herd php artisan tinker
+> $user = \App\Models\User::first() ?? \App\Models\User::factory()->create(['email' => 'tester@example.com']);
+> $token = $user->createToken('postman')->plainTextToken;
+```
+
+The token will look something like this: `1|mVsbWKUDHax0SSk52sE8byAYdfOrLkcZNd8m5Mk4d42ce190`. Copy it and use it in `Postman > Authorization tab > Auth type: Bearer token > Token: <paste the token here>`.
+
+#### # Request
+
+**POST https://mediadrop.test/api/media**
+
+**Request Headers:**
+
+- Authorization: Bearer 1|s3oZOex6F25tBSkLGkfQMAXNho89BxoTGXauXh9s70c83fa0
+- User-Agent: PostmanRuntime/7.48.0
+- Accept: */*
+- Cache-Control: no-cache
+- Host: mediadrop.test
+- Accept-Encoding: gzip, deflate, br
+- Connection: keep-alive
+- Content-Type: multipart/form-data; boundary=--------------------------868968937604932384420559
+- Content-Length: 61850511
+
+**Request Body:**
+
+- title: "Test video"
+- description: "This is a test video"
+- file: undefined (the file was a 61.9 MB video, but Postman doesn't show it in the console)
+
+#### # Response
+
+**Status Code:** 201
+
+**Response Time:** 552 ms
+
+**Response Headers:**
+
+- Server: nginx/1.25.4
+- Content-Type: application/json
+- Transfer-Encoding: chunked
+- Connection: keep-alive
+- X-Powered-By: PHP/8.4.13
+- Cache-Control: no-cache, private
+- Date: Fri, 17 Oct 2025 16:30:48 GMT
+- Vary: Origin
+
+**Response Body:**
+
+```json
+{
+    "id": "0199f302-7615-733f-96f4-083248778efe",
+    "title": "Test video",
+    "description": "This is a test video",
+    "media_type": "video\/mp4",
+    "size": 61850051,
+    "public_url": "https:\/\/mediadrop.test\/storage\/media\/0VhKCm5nxsPEEhfqvxn9lhfzGMuHO0tCEjTQOydj.mp4",
+    "created_at": "2025-10-17T16:30:48.000000Z"
+}
+```
