@@ -77,7 +77,7 @@ herd php artisan pest:dataset <DatasetName>   # Creates tests/Datasets/<DatasetN
 We can also avoid using `$this->` by using Pest's built-in functions from the `Pest\Laravel` namespace, eg.
 
 ```php
-use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\{assertDatabaseHas, post};
 
 # This example fails, but it shows how to use Pest's built-in functions
 it('stores a media record in the database', function () {
