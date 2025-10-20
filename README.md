@@ -81,27 +81,22 @@ git clone git@github.com:mathmul/mediadrop.git && cd mediadrop
 # 2) Copy .env
 cp .env.example .env
 
-# 3) Uncomment Herd-specific config in .env
-#    APP_URL=https://mediadrop.test
-#    DB_HOST=127.0.0.1
-#    SESSION_DRIVER=database
-
-# 4) App key & storage link
+# 3) App key & storage link
 herd php artisan key:generate
 herd php artisan storage:link
 
-# 5) Start Postgres only
+# 4) Start Postgres only
 docker compose --profile dbonly up -d
 # To stop Postgres only: docker compose --profile dbonly down
 
-# 6) Migrate
+# 5) Migrate
 herd php artisan migrate
 
-# 7) (Optional) Health + tests
+# 6) (Optional) Health + tests
 curl https://mediadrop.test/api/health && echo
 herd php artisan test
 
-# 8) Serve via Herd
+# 7) Serve via Herd
 herd init
 ```
 
@@ -121,24 +116,17 @@ git clone git@github.com:mathmul/mediadrop.git && cd mediadrop
 # 2) Copy .env
 cp .env.example .env
 
-# 3) Uncomment Docker-specific config in .env
-#    APP_URL=http://localhost:8080
-#    DB_HOST=postgres
-#    SESSION_DRIVER=file
-
-# 4) Start full stack (Compose profile: full)
+# 3) Start full stack (Compose profile: full)
 docker compose --profile full up -d
 # To stop the full stack: docker compose --profile full down
 
-# 5) Run migrations
+# 4) Run migrations
 docker compose exec app php artisan migrate
 
-# 6) (Optional) Health + tests
+# 5) (Optional) Health + tests
 curl http://localhost:8080/api/health && echo
 docker compose exec app php artisan test
 ```
-
-> **NOTE:** When using Docker, any commands you’d normally run with `herd` should be run with `docker compose exec app` instead (e.g., `docker compose exec app php artisan <command>`).
 
 
 ## Development

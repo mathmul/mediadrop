@@ -2,6 +2,10 @@ services:
   # --- PHP-FPM app ---
   app:
     profiles: ["full"]
+    environment:
+      APP_URL: http://localhost:8080
+      DB_HOST: postgres
+      SESSION_DRIVER: file
     build:
       context: .
       dockerfile: docker/app/Dockerfile
