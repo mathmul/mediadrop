@@ -34,7 +34,7 @@ Laravel 12 / PHP 8.4 project — assignment to build an authenticated API for me
     <summary>Add Authentication</summary>
     <p>Use Laravel Sanctum for token-based authentication and protect the API route with <code>auth:sanctum</code> middleware.</p>
     </details>
-- [ ] Task 7:
+- [X] Task 7:
     <details>
     <summary>Documentation</summary>
     <p>Document setup steps, API endpoint details, and testing instructions in this README.</p>
