@@ -5,12 +5,14 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 
-it('allows an authenticated user to upload a media file and stores its record', function () {
-    $disk = config('filesystems.default', 'public');
-    Storage::fake($disk);
+beforeEach(function () {
+    $this->withHeader('Accept', 'application/json');
+    Storage::fake('public');
     $user = User::factory()->create();
     Sanctum::actingAs($user);
+});
 
+it('allows an authenticated user to upload a media file and stores its record', function () {
     $file = UploadedFile::fake()->image('test.jpg');
 
     $response = $this->postJson('/api/media', [
@@ -30,13 +32,102 @@ it('allows an authenticated user to upload a media file and stores its record', 
         ]);
 
     // Assert the file was stored
-    /** @var \Illuminate\Filesystem\FilesystemAdapter|\Illuminate\Filesystem\FakeFilesystem $storage */
-    $storage = Storage::disk($disk);
-    $storage->assertExists('media/' . $file->hashName());
+    Storage::disk('public')->assertExists('media/' . $file->hashName());
 
     // Assert the database has a record
     $this->assertDatabaseHas('media', [
         'title' => 'Test upload',
         'media_type' => 'image/jpeg',
     ]);
+});
+
+it('rejects JSON uploads with validation error', function () {
+    $this->postJson('/api/media', [
+        'title' => 'Bad JSON upload',
+        'description' => 'Request header "application/json" does not support file uploads',
+        'file' => 'path, base64, or some other string',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file']);
+});
+
+it('requires a title', function () {
+    $file = UploadedFile::fake()->image('x.jpg');
+    $this->post('/api/media', [
+        'title' => '',
+        'file' => $file,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['title']);
+});
+
+it('requires a file', function () {
+    $this->post('/api/media', [
+        'title' => 'Missing file',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file']);
+});
+dataset('supported_media_types', [
+    ['ok.jpg',   64,   'image/jpeg'],
+    ['ok.png',   64,   'image/png'],
+    ['ok.gif',   64,   'image/gif'],
+    ['ok.webp',  64,   'image/webp'],
+    ['ok.mp4',   1024, 'video/mp4'],
+    ['ok.mov',   1024, 'video/quicktime'],
+    ['ok.webm',  1024, 'video/webm'],
+]);
+it('accepts supported media types', function (string $name, int $kb, string $mediaType) {
+    $file = UploadedFile::fake()->create($name, $kb, $mediaType);
+    $this->post('/api/media', [
+        'title' => 'Bad type',
+        'file' => $file,
+    ])
+        ->assertCreated();
+})->with('supported_media_types');
+
+dataset('unsupported_media_types', [
+    // [filename,    size_kb,  media_type]
+    ['readme.txt',   4,        'text/plain'],
+    ['vector.svg',   10,       'image/svg+xml'], // TODO (mathmul): Should we support SVG uploads?
+    ['photo.heic',   512,      'image/heic'],
+    ['photo.heif',   512,      'image/heif'],
+    ['track.mp3',    1024,     'audio/mpeg'],
+    ['movie.mkv',    2048,     'video/x-matroska'],
+    ['archive.zip',  64,       'application/zip'],
+    ['script.js',    5,        'application/javascript'],
+]);
+it('rejects unsupported media types', function (string $name, int $kb, string $mediaType) {
+    $file = UploadedFile::fake()->create($name, $kb, $mediaType);
+    $this->post('/api/media', [
+        'title' => 'Bad type',
+        'file' => $file,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file']);
+})->with('unsupported_media_types');
+
+/**
+ * Laravel's file "max" rule is in KB.
+ * 200 MB = 204800 KB
+ */
+it('accepts a 200 MB upload', function () {
+    $file = UploadedFile::fake()->create('ok-200mb.mp4', 204_800, 'video/mp4');
+    $this->post('/api/media', [
+        'title' => 'Max size',
+        'description' => 'Exactly at 200 MB limit',
+        'file' => $file,
+    ])
+        ->assertCreated();
+});
+
+it('rejects a 201 MB upload with validation error', function () {
+    $file = UploadedFile::fake()->create('too-big-201mb.mp4', 206_000, 'video/mp4');
+    $this->post('/api/media', [
+        'title' => 'Too big',
+        'description' => 'Bigger than 200 MB',
+        'file' => $file,
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file']);
 });

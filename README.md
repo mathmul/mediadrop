@@ -102,3 +102,7 @@ herd php artisan ide-helper:generate
 herd php artisan ide-helper:meta
 herd php artisan ide-helper:models --write --reset
 ```
+
+### *NOTE*
+
+`POST /api/media` endpoint allows files up to 200 MB to be uploaded to the server. Configure *Max File Upload Size* and *Memory Limit* in Herd PHP settings accordingly (or set `upload_max_filesize` and `memory_limit` to `200M` in *php.ini*).
