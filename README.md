@@ -120,10 +120,13 @@ cp .env.example .env
 docker compose --profile full up -d
 # To stop the full stack: docker compose --profile full down
 
-# 4) Run migrations
+# 4) (Optional) Check logs
+docker compose logs -f app
+
+# 5) Run migrations
 docker compose exec app php artisan migrate
 
-# 5) (Optional) Health + tests
+# 6) (Optional) Health + tests
 curl http://localhost:8080/api/health && echo
 docker compose exec app php artisan test
 ```
