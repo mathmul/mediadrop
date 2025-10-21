@@ -315,11 +315,6 @@ $token
 # example: 1|mVsbWKUDHax0SSk52sE8byAYdfOrLkcZNd8m5Mk4d42ce190
 ```
 
-Copy it and use it in:
-
-- Postman: `Authorization tab > Auth type: Bearer token > Token: <paste the token here>`.
-- cURL: `curl -H "Authorization: Bearer <token>" https://mediadrop.test/api/media`
-
 #### Example request
 
 Herd (HTTPS):
@@ -333,6 +328,12 @@ Docker (HTTP):
 ```bash
 POST http://localhost:8080/api/media
 ```
+
+**Headers (common):**
+
+- `Authorization: Bearer <token>`
+- `Content-Type: multipart/form-data`
+- `Accept: application/json`
 
 **Body (multipart/form-data):**
 
