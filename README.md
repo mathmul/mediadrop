@@ -66,7 +66,7 @@ We support two local setups - pick one (don't run both on the same ports):
 - Herd (MacOS, Windows) - uses Docker only for Postgres
 - Docker (Linux, MacOS, Windows) - Nginx + PHP-FPM + Postgres in containers
 
-### Herd
+### Herd (easier for de)
 
 Prerequisites:
 - [Laravel Herd](https://herd.laravel.com/docs/macos/getting-started/installation)
@@ -81,23 +81,30 @@ git clone git@github.com:mathmul/mediadrop.git && cd mediadrop
 # 2) Copy .env
 cp .env.example .env
 
-# 3) App key & storage link
+# 3) Install dependencies
+herd composer install
+
+# 4) App key & storage link
 herd php artisan key:generate
 herd php artisan storage:link
 
-# 4) Start Postgres only
+# 5) Start Postgres only
 docker compose --profile dbonly up -d
 # To stop Postgres only: docker compose --profile dbonly down
 
-# 5) Migrate
+# 6) Run migrations
 herd php artisan migrate
 
-# 6) (Optional) Health + tests
+# 7) Serve via Herd (as <folder-name>.test)
+herd init
+
+# 8) Enable HTTPS
+herd secure
+# To disable HTTPS: herd unsecure
+
+# 9) (Optional) Health + tests
 curl https://mediadrop.test/api/health && echo
 herd php artisan test
-
-# 7) Serve via Herd
-herd init
 ```
 
 ### Docker
